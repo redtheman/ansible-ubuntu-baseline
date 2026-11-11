@@ -1,0 +1,67 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Read effective sshd settings
+      ansible.builtin.command: /usr/sbin/sshd -T
+      register: sshd
+      changed_when: false
+
+    - name: SSH is key-only, no root, no forwarding
+      ansible.builtin.assert:
+        that:
+          - "'permitrootlogin no' in sshd.stdout_lines"
+          - "'passwordauthentication no' in sshd.stdout_lines"
+          - "'kbdinteractiveauthentication no' in sshd.stdout_lines"
+          - "'x11forwarding no' in sshd.stdout_lines"
+          - "'allowtcpforwarding no' in sshd.stdout_lines"
+          - "'maxauthtries 3' in sshd.stdout_lines"
+          - sshd.stdout is search('ciphers chacha20-poly1305@openssh.com')
+          - sshd.stdout is not search('cbc')
+
+    - name: Read audit rules
+      ansible.builtin.slurp:
+        src: /etc/audit/rules.d/50-baseline.rules
+      register: rules
+
+    - name: Audit rules watch identity files and only existing app dirs
+      vars:
+        text: "{{ rules.content | b64decode }}"
+      ansible.builtin.assert:
+        that:
+          - "'-w /etc/shadow -p wa -k identity' in text"
+          - "'-w /var/www -p wa -k app-dirs' in text"
+          - "'-w /opt ' in text"
+          - "'-k root-commands' in text"
+
+    - name: Read unattended-upgrades policy
+      ansible.builtin.slurp:
+        src: /etc/apt/apt.conf.d/52baseline-unattended-upgrades
+      register: uu
+
+    - name: Security updates are automatic
+      ansible.builtin.assert:
+        that: "(uu.content | b64decode) is search('-security')"
+
+    - name: Read kernel settings file
+      ansible.builtin.slurp:
+        src: /etc/sysctl.d/60-baseline.conf
+      register: sysctl
+
+    - name: Kernel hardening present
+      ansible.builtin.assert:
+        that:
+          - "(sysctl.content | b64decode) is search('net.ipv4.conf.all.accept_redirects = 0')"
+          - "(sysctl.content | b64decode) is search('kernel.kptr_restrict = 2')"
+
+    - name: Clear-text clients are gone
+      ansible.builtin.command: dpkg-query -W -f='${Status}' telnet
+      register: telnet
+      changed_when: false
+      failed_when: false
+
+    - name: Assert telnet absent
+      ansible.builtin.assert:
+        that: telnet.rc != 0 or 'installed' not in telnet.stdout

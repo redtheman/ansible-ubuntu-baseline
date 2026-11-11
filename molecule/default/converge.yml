@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  pre_tasks:
+    - name: Create an application directory to watch
+      ansible.builtin.file:
+        path: /var/www
+        state: directory
+        mode: "0755"
+  roles:
+    - role: baseline

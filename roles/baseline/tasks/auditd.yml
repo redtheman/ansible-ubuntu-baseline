@@ -1,0 +1,25 @@
+---
+- name: Find which watched application directories exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ baseline_audit_watch_dirs }}"
+  register: baseline_audit_dir_stats
+
+- name: Audit rules for identity, privilege and application directories
+  ansible.builtin.template:
+    src: 50-baseline.rules.j2
+    dest: /etc/audit/rules.d/50-baseline.rules
+    owner: root
+    group: root
+    mode: "0640"
+  vars:
+    baseline_audit_existing_dirs: >-
+      {{ baseline_audit_dir_stats.results | selectattr('stat.exists') | map(attribute='item') | list }}
+  notify: Load audit rules
+
+- name: Enable auditd
+  ansible.builtin.systemd_service:
+    name: auditd
+    enabled: true
+    state: started
+  when: not baseline_in_container | bool

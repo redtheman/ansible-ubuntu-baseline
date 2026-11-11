@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+{% for s in baseline_ntp_servers %}
+server {{ s }} prefer iburst minpoll 4 maxpoll 4
+{% endfor %}

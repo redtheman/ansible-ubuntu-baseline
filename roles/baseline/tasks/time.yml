@@ -1,0 +1,16 @@
+---
+- name: Chrony sources
+  ansible.builtin.template:
+    src: chrony-baseline.sources.j2
+    dest: /etc/chrony/sources.d/baseline.sources
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload chrony sources
+
+- name: Enable chrony
+  ansible.builtin.systemd_service:
+    name: chrony
+    enabled: true
+    state: started
+  when: not baseline_in_container | bool

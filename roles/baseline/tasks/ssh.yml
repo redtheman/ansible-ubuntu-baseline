@@ -1,0 +1,28 @@
+---
+- name: Ensure privilege-separation directory exists
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    mode: "0755"
+
+- name: Login banner
+  ansible.builtin.copy:
+    content: "{{ baseline_ssh_banner }}"
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Hardened sshd drop-in
+  ansible.builtin.template:
+    src: sshd-baseline.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-baseline.conf
+    owner: root
+    group: root
+    mode: "0600"
+  register: baseline_sshd_dropin
+  notify: Restart ssh
+
+- name: Validate full sshd configuration before any restart
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false

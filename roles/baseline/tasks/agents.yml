@@ -1,0 +1,43 @@
+---
+- name: AWS SSM Agent (snap, as shipped on Ubuntu AMIs)
+  when: baseline_install_ssm_agent | bool
+  block:
+    - name: Install SSM Agent
+      community.general.snap:
+        name: amazon-ssm-agent
+        classic: true
+    - name: Enable SSM Agent
+      ansible.builtin.systemd_service:
+        name: snap.amazon-ssm-agent.amazon-ssm-agent.service
+        enabled: true
+        state: started
+
+- name: Wazuh agent
+  when: baseline_install_wazuh_agent | bool
+  block:
+    - name: Require a manager address
+      ansible.builtin.assert:
+        that: baseline_wazuh_manager | length > 0
+        fail_msg: "set baseline_wazuh_manager when baseline_install_wazuh_agent is true"
+    - name: Wazuh signing key
+      ansible.builtin.get_url:
+        url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+        dest: /etc/apt/keyrings/wazuh.asc
+        mode: "0644"
+    - name: Wazuh apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/wazuh.asc] https://packages.wazuh.com/4.x/apt/ stable main"
+        filename: wazuh
+    - name: Install agent registered to the manager
+      ansible.builtin.apt:
+        name: wazuh-agent
+        state: present
+      environment:
+        WAZUH_MANAGER: "{{ baseline_wazuh_manager }}"
+        WAZUH_AGENT_GROUP: "{{ baseline_wazuh_agent_group }}"
+    - name: Enable Wazuh agent
+      ansible.builtin.systemd_service:
+        name: wazuh-agent
+        enabled: true
+        state: started
+        daemon_reload: true

@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+# Loaded before cloud-init's 50-cloud-init.conf; for most keywords sshd uses the first value it reads.
+Port {{ baseline_ssh_port }}
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+MaxAuthTries 3
+MaxSessions 4
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding {{ 'yes' if baseline_ssh_allow_tcp_forwarding else 'no' }}
+PermitTunnel no
+LogLevel VERBOSE
+Banner /etc/issue.net
+{% if baseline_ssh_allow_groups %}
+AllowGroups {{ baseline_ssh_allow_groups | join(' ') }}
+{% endif %}
+KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com

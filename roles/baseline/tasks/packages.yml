@@ -1,0 +1,13 @@
+---
+- name: Install baseline packages
+  ansible.builtin.apt:
+    name: "{{ baseline_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Remove legacy clear-text clients
+  ansible.builtin.apt:
+    name: "{{ baseline_packages_absent }}"
+    state: absent
+    purge: true

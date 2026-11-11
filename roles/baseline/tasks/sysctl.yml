@@ -1,0 +1,9 @@
+---
+- name: Kernel hardening settings
+  ansible.builtin.template:
+    src: 60-baseline-sysctl.conf.j2
+    dest: /etc/sysctl.d/60-baseline.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply sysctl

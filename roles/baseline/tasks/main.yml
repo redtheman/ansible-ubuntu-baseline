@@ -1,0 +1,23 @@
+---
+- name: Check this is a supported platform
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_major_version is version('22', '>=')
+    fail_msg: "baseline supports Ubuntu 22.04 and 24.04 only"
+    quiet: true
+
+- name: Packages
+  ansible.builtin.import_tasks: packages.yml
+- name: Automatic security updates
+  ansible.builtin.import_tasks: updates.yml
+- name: SSH hardening
+  ansible.builtin.import_tasks: ssh.yml
+- name: Kernel network and memory hardening
+  ansible.builtin.import_tasks: sysctl.yml
+- name: Audit rules
+  ansible.builtin.import_tasks: auditd.yml
+- name: Time sync
+  ansible.builtin.import_tasks: time.yml
+- name: Agents
+  ansible.builtin.import_tasks: agents.yml

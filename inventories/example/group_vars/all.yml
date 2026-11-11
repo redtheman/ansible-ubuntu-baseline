@@ -1,0 +1,10 @@
+---
+ansible_connection: community.aws.aws_ssm
+ansible_aws_ssm_region: eu-west-1
+ansible_aws_ssm_bucket_name: my-ansible-ssm-transfer   # S3 bucket used to move module files
+ansible_python_interpreter: /usr/bin/python3
+
+baseline_install_ssm_agent: true
+baseline_install_wazuh_agent: true
+baseline_wazuh_manager: wazuh-manager.internal.example
+baseline_ssh_allow_groups: [ops]

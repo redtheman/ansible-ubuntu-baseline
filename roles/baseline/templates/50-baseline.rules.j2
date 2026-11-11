@@ -1,0 +1,17 @@
+## {{ ansible_managed }}
+## Identity and privilege changes
+-w /etc/passwd -p wa -k identity
+-w /etc/shadow -p wa -k identity
+-w /etc/group -p wa -k identity
+-w /etc/gshadow -p wa -k identity
+-w /etc/sudoers -p wa -k privilege
+-w /etc/sudoers.d/ -p wa -k privilege
+## Remote access configuration
+-w /etc/ssh/sshd_config -p wa -k sshd
+-w /etc/ssh/sshd_config.d/ -p wa -k sshd
+## Commands run with elevated privileges
+-a always,exit -F arch=b64 -S execve -F euid=0 -F auid>=1000 -F auid!=unset -k root-commands
+## Application directories: writes, renames and attribute changes are attributable to a login user
+{% for d in baseline_audit_existing_dirs %}
+-w {{ d }} -p wa -k app-dirs
+{% endfor %}

@@ -1,0 +1,45 @@
+---
+# Containers (Molecule, CI) can't load kernel, audit or clock settings; on real hosts these are applied.
+baseline_in_container: >-
+  {{ ansible_virtualization_role | default('') == 'guest'
+     and ansible_virtualization_type | default('') in ['docker', 'container', 'podman', 'lxc'] }}
+
+baseline_packages:
+  - openssh-server
+  - auditd
+  - chrony
+  - unattended-upgrades
+  - needrestart
+baseline_packages_absent:
+  - telnet
+  - rsh-client
+  - ftp
+
+# --- SSH ---------------------------------------------------------------------
+baseline_ssh_port: 22
+baseline_ssh_allow_tcp_forwarding: false
+baseline_ssh_allow_groups: []            # e.g. ["ops"]; empty = no restriction
+baseline_ssh_banner: |
+  Authorised access only. Activity on this system is logged and monitored.
+
+# --- Patching ----------------------------------------------------------------
+baseline_unattended_security_only: true
+baseline_unattended_auto_reboot: false
+baseline_unattended_reboot_time: "03:30"
+
+# --- Time --------------------------------------------------------------------
+# Amazon Time Sync Service, reachable from every EC2 instance.
+baseline_ntp_servers:
+  - 169.254.169.123
+
+# --- Audit -------------------------------------------------------------------
+# Directories whose writes/renames should be attributable (who moved the app dir?).
+baseline_audit_watch_dirs:
+  - /var/www
+  - /opt
+
+# --- Agents (off by default; enable per environment) -------------------------
+baseline_install_ssm_agent: false
+baseline_install_wazuh_agent: false
+baseline_wazuh_manager: ""               # required when the Wazuh agent is enabled
+baseline_wazuh_agent_group: default

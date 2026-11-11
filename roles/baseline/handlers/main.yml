@@ -1,0 +1,21 @@
+---
+- name: Restart ssh
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: restarted
+  when: not baseline_in_container | bool
+
+- name: Apply sysctl
+  ansible.builtin.command: sysctl --system
+  changed_when: true
+  when: not baseline_in_container | bool
+
+- name: Load audit rules
+  ansible.builtin.command: augenrules --load
+  changed_when: true
+  when: not baseline_in_container | bool
+
+- name: Reload chrony sources
+  ansible.builtin.command: chronyc reload sources
+  changed_when: true
+  when: not baseline_in_container | bool
